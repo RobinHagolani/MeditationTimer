@@ -12,8 +12,19 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import com.robinhagolani.meditationtimer.ui.theme.MeditationTimerTheme
+import dagger.hilt.android.AndroidEntryPoint
+import javax.inject.Inject
 
+// Test-Klasse für Dependency Injection
+class TestClass @Inject constructor() {
+    fun getMessage() = "Hilt is working!"
+}
+
+@AndroidEntryPoint
 class MainActivity : ComponentActivity() {
+    @Inject
+    lateinit var testClass: TestClass
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -21,7 +32,7 @@ class MainActivity : ComponentActivity() {
             MeditationTimerTheme {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
                     Greeting(
-                        name = "Android",
+                        name = testClass.getMessage(),
                         modifier = Modifier.padding(innerPadding)
                     )
                 }
@@ -29,6 +40,8 @@ class MainActivity : ComponentActivity() {
         }
     }
 }
+
+
 
 @Composable
 fun Greeting(name: String, modifier: Modifier = Modifier) {

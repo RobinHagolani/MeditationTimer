@@ -371,4 +371,52 @@ abstract class BindingModule {
 ```
 ```
 
-Soll ich mit dem nächsten Dokument (ui_components.md) fortfahren?
+## Recent Setup (05 April 2025)
+
+### 1. Gradle Configuration
+```kotlin
+// Project-level build.gradle.kts
+buildscript {
+    dependencies {
+        classpath("com.google.dagger:hilt-android-gradle-plugin:2.50")
+    }
+}
+
+plugins {
+    alias(libs.plugins.hilt.android) apply false
+}
+
+// App-level build.gradle.kts
+plugins {
+    alias(libs.plugins.android.application)
+    alias(libs.plugins.jetbrains.kotlin.android)
+    kotlin("kapt")
+    alias(libs.plugins.hilt.android)
+}
+
+dependencies {
+    implementation("com.google.dagger:hilt-android:2.50")
+    kapt("com.google.dagger:hilt-android-compiler:2.50")
+    implementation("androidx.hilt:hilt-navigation-compose:1.1.0")
+}
+```
+
+### 2. Application Setup
+```kotlin
+@HiltAndroidApp
+class MeditationTimerApp : Application()
+```
+
+### 3. Activity Setup
+```kotlin
+@AndroidEntryPoint
+class MainActivity : ComponentActivity() {
+    @Inject
+    lateinit var testClass: TestClass  // Test injection
+}
+```
+
+### 4. Next Steps
+- Create DI modules for different features
+- Set up ViewModels with Hilt
+- Implement Repository pattern with DI

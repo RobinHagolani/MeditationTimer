@@ -125,3 +125,20 @@ Each new feature requires:
 - [ ] Add breathing animation
 - [ ] Create statistics tracking
 - [ ] Implement settings
+
+### Recent Updates (05 April 2025)
+
+#### Project Setup
+- Upgraded AGP to 8.5.0
+- Configured Hilt 2.50 for dependency injection
+- Set up Java 17 compatibility
+- Created MeditationTimerApp.kt as Hilt entry point
+
+#### Directory Structure Updates
+Added:
+- `MeditationTimerApp.kt` - Hilt Application class
+- `di/` - Dependency Injection modules (planned)
+- `domain/` - Business logic layer (planned)
+   - `usecases/` - Business logic implementations
+   - `repositories/` - Repository interfaces
+   - `models/` - Domain models
