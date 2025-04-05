@@ -1,18 +1,18 @@
 package com.robinhagolani.meditationtimer.ui.screens
 
 import android.R.drawable
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.material3.Icon
-import androidx.compose.material3.FloatingActionButton
-import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.Text
+import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.robinhagolani.meditationtimer.ui.components.CircularTimer
@@ -31,20 +31,10 @@ fun TimerScreen(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.SpaceBetween
     ) {
-        // Duration selector
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceEvenly
-        ) {
-            listOf(5, 10, 15, 20).forEach { minutes ->
-                OutlinedButton(
-                    onClick = { viewModel.setDuration(minutes) },
-                    modifier = Modifier.padding(4.dp)
-                ) {
-                    Text("$minutes min")
-                }
-            }
-        }
+        // New Duration selector
+        DurationSelector(
+            onDurationSelected = { viewModel.setDuration(it) }
+        )
 
         // Timer
         CircularTimer(
@@ -87,6 +77,79 @@ fun TimerScreen(
                         imageVector = Icons.Filled.PlayArrow,
                         contentDescription = "Start"
                     )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun DurationSelector(
+    onDurationSelected: (Int) -> Unit
+) {
+    var showCustomInput by remember { mutableStateOf(false) }
+    var customMinutes by remember { mutableStateOf("") }
+
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        // Quick select chips
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp),
+            horizontalArrangement = Arrangement.SpaceEvenly
+        ) {
+            listOf(5, 10, 15, 20).forEach { minutes ->
+                FilterChip(
+                    selected = false,
+                    onClick = { onDurationSelected(minutes) },
+                    label = { Text("$minutes min") },
+                    modifier = Modifier.padding(4.dp)
+                )
+            }
+        }
+
+        TextButton(
+            onClick = { showCustomInput = !showCustomInput }
+        ) {
+            Text(if (showCustomInput) "Hide custom" else "Custom duration")
+        }
+
+        AnimatedVisibility(showCustomInput) {
+            Row(
+                modifier = Modifier.padding(8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                OutlinedTextField(
+                    value = customMinutes,
+                    onValueChange = {
+                        if (it.isEmpty() || it.toIntOrNull() != null) {
+                            customMinutes = it
+                        }
+                    },
+                    label = { Text("Minutes") },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    modifier = Modifier.width(120.dp),
+                    singleLine = true
+                )
+
+                Spacer(modifier = Modifier.width(8.dp))
+
+                Button(
+                    onClick = {
+                        customMinutes.toIntOrNull()?.let {
+                            if (it > 0) {
+                                onDurationSelected(it)
+                                showCustomInput = false
+                                customMinutes = ""
+                            }
+                        }
+                    },
+                    enabled = customMinutes.isNotEmpty() && customMinutes.toIntOrNull() != null && customMinutes.toIntOrNull()!! > 0
+                ) {
+                    Text("Set")
                 }
             }
         }

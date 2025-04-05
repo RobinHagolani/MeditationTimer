@@ -1,6 +1,7 @@
 
 package com.robinhagolani.meditationtimer.viewmodels
 
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -11,9 +12,14 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.stateIn
 
 @HiltViewModel
-class TimerViewModel @Inject constructor() : ViewModel() {
+class TimerViewModel @Inject constructor(
+    private val savedStateHandle: SavedStateHandle
+) : ViewModel() {
 
     data class TimerState(
         val totalSeconds: Int = 900, // 15 minutes default
@@ -22,45 +28,57 @@ class TimerViewModel @Inject constructor() : ViewModel() {
         val isPaused: Boolean = false
     )
 
-    private val _timerState = MutableStateFlow(TimerState())
-    val timerState: StateFlow<TimerState> = _timerState.asStateFlow()
+    private val _totalSeconds = savedStateHandle.getStateFlow("total_seconds", 900)
+    private val _remainingSeconds = savedStateHandle.getStateFlow("remaining_seconds", 900)
+    private val _isRunning = savedStateHandle.getStateFlow("is_running", false)
+    private val _isPaused = savedStateHandle.getStateFlow("is_paused", false)
+
+    val timerState = combine(
+        _totalSeconds,
+        _remainingSeconds,
+        _isRunning,
+        _isPaused
+    ) { total, remaining, running, paused ->
+        TimerState(
+            totalSeconds = total,
+            remainingSeconds = remaining,
+            isRunning = running,
+            isPaused = paused
+        )
+    }.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = TimerState()
+    )
 
     private var timerJob: Job? = null
 
     fun setDuration(minutes: Int) {
         val seconds = minutes * 60
-        _timerState.value = _timerState.value.copy(
-            totalSeconds = seconds,
-            remainingSeconds = seconds
-        )
+        savedStateHandle["total_seconds"] = seconds
+        savedStateHandle["remaining_seconds"] = seconds
     }
 
     fun startTimer() {
         if (timerJob?.isActive == true) return
 
         timerJob = viewModelScope.launch {
-            _timerState.value = _timerState.value.copy(
-                isRunning = true,
-                isPaused = false
-            )
+            savedStateHandle["is_running"] = true
+            savedStateHandle["is_paused"] = false
 
-            while (_timerState.value.remainingSeconds > 0) {
+            while (_remainingSeconds.value > 0) {
                 delay(1000L)
-                _timerState.value = _timerState.value.copy(
-                    remainingSeconds = _timerState.value.remainingSeconds - 1
-                )
+                savedStateHandle["remaining_seconds"] = _remainingSeconds.value - 1
             }
 
-            _timerState.value = _timerState.value.copy(isRunning = false)
+            savedStateHandle["is_running"] = false
         }
     }
 
     fun pauseTimer() {
         timerJob?.cancel()
-        _timerState.value = _timerState.value.copy(
-            isRunning = false,
-            isPaused = true
-        )
+        savedStateHandle["is_running"] = false
+        savedStateHandle["is_paused"] = true
     }
 
     fun resumeTimer() {
@@ -69,10 +87,8 @@ class TimerViewModel @Inject constructor() : ViewModel() {
 
     fun resetTimer() {
         timerJob?.cancel()
-        _timerState.value = _timerState.value.copy(
-            remainingSeconds = _timerState.value.totalSeconds,
-            isRunning = false,
-            isPaused = false
-        )
+        savedStateHandle["remaining_seconds"] = _totalSeconds.value
+        savedStateHandle["is_running"] = false
+        savedStateHandle["is_paused"] = false
     }
 }
