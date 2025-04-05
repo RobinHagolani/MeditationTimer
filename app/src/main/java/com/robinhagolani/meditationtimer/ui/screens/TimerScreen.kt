@@ -24,29 +24,41 @@ fun TimerScreen(
 ) {
     val timerState by viewModel.timerState.collectAsState()
 
-    Column(
+    Box(
         modifier = Modifier
             .fillMaxSize()
-            .padding(16.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.SpaceBetween
+            .padding(16.dp)
     ) {
-        // New Duration selector
-        DurationSelector(
-            onDurationSelected = { viewModel.setDuration(it) }
-        )
+        Column(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            // Duration selector with AnimatedVisibility
+            AnimatedVisibility(
+                visible = !timerState.isRunning && !timerState.isPaused
+            ) {
+                DurationSelector(
+                    onDurationSelected = { viewModel.setDuration(it) }
+                )
+            }
+        }
 
-        // Timer
-        CircularTimer(
-            progress = 1f - (timerState.remainingSeconds.toFloat() / timerState.totalSeconds.toFloat()),
-            time = formatTime(timerState.remainingSeconds)
-        )
+        // Timer centered in Box
+        Box(
+            modifier = Modifier.align(Alignment.Center)
+        ) {
+            CircularTimer(
+                progress = 1f - (timerState.remainingSeconds.toFloat() / timerState.totalSeconds.toFloat()),
+                time = formatTime(timerState.remainingSeconds)
+            )
+        }
 
-        // Control buttons
+        // Control buttons at bottom
         Row(
             modifier = Modifier
-                .fillMaxWidth()
-                .padding(bottom = 32.dp),
+                .align(Alignment.BottomCenter)
+                .padding(bottom = 32.dp)
+                .fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceEvenly
         ) {
             FloatingActionButton(
